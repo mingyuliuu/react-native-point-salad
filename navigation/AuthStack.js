@@ -18,7 +18,7 @@ const AuthStack = () => {
         AsyncStorage.setItem("alreadyLaunched", "true");
         setIsFirstLaunch(true);
       } else {
-        setIsFirstLaunch(false);
+        setIsFirstLaunch(true);
       }
     });
   }, []);
@@ -38,7 +38,10 @@ const AuthStack = () => {
     >
       <AppStack.Screen name="Instruction" component={InstructionScreen} />
       <AppStack.Screen name="Login" component={LoginScreen} />
-      <AppStack.Screen name="Signup" component={SignupScreen} />
+      <AppStack.Screen
+        name="Signup"
+        component={SignupScreen}
+      />
     </AppStack.Navigator>
   );
 };
