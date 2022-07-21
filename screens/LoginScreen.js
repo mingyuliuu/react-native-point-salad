@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,10 +11,13 @@ import FormInput from "../components/FormInput";
 import SocialButton from "../components/SocialButton";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { AuthContext } from "../navigation/Authentication";
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
+
+  const {login} = useContext(AuthContext);
 
   return (
     <ImageBackground
@@ -37,6 +40,7 @@ const LoginScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              showEye={false}
             />
 
             <FormInput
@@ -44,7 +48,7 @@ const LoginScreen = ({ navigation }) => {
               onChangeText={(userPassword) => setPassword(userPassword)}
               placeholderText="Password"
               iconType="lock"
-              secureTextEntry={true}
+              showEye={true}
             />
           </View>
 
@@ -53,7 +57,7 @@ const LoginScreen = ({ navigation }) => {
               name="checkmark-done-sharp"
               size={40}
               color="white"
-              onPress={() => alert("Sign in clicked!")}
+              onPress={() => login(email, password)}
             />
           </View>
         </View>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,11 +12,14 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import FormButton from "../components/FormButton";
 import FormInput from "../components/FormInput";
 import SocialButton from "../components/SocialButton";
+import { AuthContext } from "../navigation/Authentication";
 
 const SignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const [confirmPassword, setConfirmPassword] = useState();
+
+  const { register } = useContext(AuthContext);
 
   return (
     <ImageBackground
@@ -50,6 +53,7 @@ const SignupScreen = ({ navigation }) => {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            showEye={false}
           />
 
           <FormInput
@@ -57,7 +61,7 @@ const SignupScreen = ({ navigation }) => {
             onChangeText={(userPassword) => setPassword(userPassword)}
             placeholderText="Password"
             iconType="lock"
-            secureTextEntry={true}
+            showEye={true}
           />
 
           <FormInput
@@ -65,7 +69,7 @@ const SignupScreen = ({ navigation }) => {
             onChangeText={(userPassword) => setConfirmPassword(userPassword)}
             placeholderText="Confirm Password"
             iconType="lock"
-            secureTextEntry={true}
+            showEye={true}
           />
 
           <FormButton

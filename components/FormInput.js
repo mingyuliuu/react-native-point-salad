@@ -1,10 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, TextInput } from "react-native";
 import { windowHeight, windowWidth } from "../utils/Dimensions";
 
 import AntDesign from "react-native-vector-icons/AntDesign";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-const FormInput = ({ labelValue, placeholderText, iconType, ...rest }) => {
+const FormInput = ({
+  labelValue,
+  placeholderText,
+  iconType,
+  showEye,
+  ...rest
+}) => {
+  const [showItem, setShowItem] = useState(false);
+
+  const changeItemVisibility = () => {
+    setShowItem(!showItem);
+  };
+
   return (
     <View style={styles.inputContainer}>
       <View style={styles.iconStyle}>
@@ -16,8 +29,19 @@ const FormInput = ({ labelValue, placeholderText, iconType, ...rest }) => {
         numberOfLines={1}
         placeholder={placeholderText}
         placeholderTextColor="#666"
+        secureTextEntry={showItem}
         {...rest}
       />
+      {showEye ? (
+        <View style={styles.eyeStyle}>
+          <MaterialIcons
+            name={showItem ? "visibility" : "visibility-off"}
+            size={20}
+            color="#666"
+            onPress={() => changeItemVisibility()}
+          />
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -31,22 +55,22 @@ const styles = StyleSheet.create({
 
   inputContainer: {
     marginBottom: 5,
-    width: '100%',
+    width: "100%",
     height: windowHeight / 18,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
 
   iconStyle: {
     padding: 5,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRightColor: '#ccc',
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRightColor: "#ccc",
     borderRightWidth: 1,
     width: 40,
   },
@@ -55,10 +79,10 @@ const styles = StyleSheet.create({
     padding: 10,
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Lato_400Regular',
-    color: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
+    fontFamily: "Lato_400Regular",
+    color: "#333",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   inputField: {
@@ -70,5 +94,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderRadius: 8,
     borderWidth: 1,
+  },
+
+  eyeStyle: {
+    padding: 5,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 40,
   },
 });
