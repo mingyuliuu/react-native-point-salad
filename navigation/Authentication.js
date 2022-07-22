@@ -1,9 +1,17 @@
-import React, { createContext, useState } from "react";
+import React, { useState, createContext } from "react";
+import { Alert } from "react-native";
 
 // Import the functions you need from the SDKs you need
 import firebase from "firebase/compat/app";
-import 'firebase/compat/auth';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import "firebase/compat/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+
+import { getDatabase, ref, set } from "firebase/database";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -21,6 +29,7 @@ const firebaseConfig = {
 let app = firebase.initializeApp(firebaseConfig);
 //export const auth = firebase.auth();
 export const auth = getAuth(app);
+export const db = getDatabase();
 
 export const AuthContext = createContext();
 
@@ -33,18 +42,29 @@ export const Authentication = ({ children }) => {
         user,
         setUser,
         login: async (email, password) => {
-          try {
-            await signInWithEmailAndPassword(auth, email, password);
-          } catch (e) {
-            console.log(e);
-          }
+          await signInWithEmailAndPassword(email, password)
+            .catch((e) => {
+              console.log(e);
+              Alert.alert(null, "You've entered an invalid email and passward combination. Please try again!", [
+                { text: "OK" },
+              ]);
+            });
         },
-        register: async (email, password) => {
-          try {
-            await createUserWithEmailAndPassword(auth, email, password);
-          } catch (e) {
-            console.log(e);
-          }
+        register: async (name, email, password) => {
+          await createUserWithEmailAndPassword(auth, email, password)
+            .then((newUser) => {
+              set(ref(db, "userData/" + newUser.user.uid), {
+                name: name,
+                email: email,
+                password: password,
+              });
+            })
+            .catch((e) => {
+              console.log(e);
+              Alert.alert(null, "Please enter a valid email!", [
+                { text: "OK" },
+              ]);
+            });
         },
         logout: async () => {
           try {

@@ -15,6 +15,7 @@ import SocialButton from "../components/SocialButton";
 import { AuthContext } from "../navigation/Authentication";
 
 const SignupScreen = ({ navigation }) => {
+  const [name, setName] = useState();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const [confirmPassword, setConfirmPassword] = useState();
@@ -46,14 +47,24 @@ const SignupScreen = ({ navigation }) => {
         {/* Upper Container - Signing Up by Email */}
         <View style={styles.signInContainer}>
           <FormInput
+            labelValue={name}
+            onChangeText={(userName) => setName(userName)}
+            placeholderText="Name"
+            iconType="user"
+            showEye={false}
+            showSecureEntry={false}
+          />
+
+          <FormInput
             labelValue={email}
             onChangeText={(userEmail) => setEmail(userEmail)}
             placeholderText="Email"
-            iconType="user"
+            iconType="mail"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             showEye={false}
+            showSecureEntry={false}
           />
 
           <FormInput
@@ -62,6 +73,7 @@ const SignupScreen = ({ navigation }) => {
             placeholderText="Password"
             iconType="lock"
             showEye={true}
+            showSecureEntry={true}
           />
 
           <FormInput
@@ -70,12 +82,47 @@ const SignupScreen = ({ navigation }) => {
             placeholderText="Confirm Password"
             iconType="lock"
             showEye={true}
+            showSecureEntry={true}
           />
 
-          <FormButton
-            buttonTitle="Sign Up"
-            onPress={() => register(email, password)}
-          />
+          {email == undefined || email == "" ? (
+            <View>
+              <Text style={styles.alert}>* Please enter your email.</Text>
+              <FormButton buttonTitle="Sign Up" bgColor="#879187" />
+            </View>
+          ) : password !== confirmPassword ? (
+            <View>
+              <Text style={styles.alert}>
+                * Please enter the same password.
+              </Text>
+              <FormButton buttonTitle="Sign Up" bgColor="#879187" />
+            </View>
+          ) : password == undefined ||
+            password == "" ||
+            confirmPassword == undefined ||
+            confirmPassword == "" ||
+            email == undefined ||
+            email == "" ? (
+            <View>
+              <Text style={styles.alert}>* Please enter a password.</Text>
+              <FormButton buttonTitle="Sign Up" bgColor="#879187" />
+            </View>
+          ) : password.length < 6 || confirmPassword.length < 6 ? (
+            <View>
+              <Text style={styles.alert}>
+                * Password had to be at least 6 characters long.
+              </Text>
+              <FormButton buttonTitle="Sign Up" bgColor="#879187" />
+            </View>
+          ) : (
+            <View>
+              <Text style={styles.alert}> </Text>
+              <FormButton
+                buttonTitle="Sign Up"
+                onPress={() => register(name, email, password)}
+              />
+            </View>
+          )}
         </View>
 
         {/* Bottom Container - Signing Up by Social Accounts */}
@@ -131,6 +178,13 @@ const styles = StyleSheet.create({
     fontSize: 28,
     marginBottom: 30,
     color: "black",
+  },
+
+  alert: {
+    marginBottom: 5,
+    fontSize: 12,
+    color: "#75202b",
+    fontFamily: "Lato_400Regular",
   },
 
   signInContainer: {

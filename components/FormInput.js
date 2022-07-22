@@ -10,9 +10,10 @@ const FormInput = ({
   placeholderText,
   iconType,
   showEye,
+  showSecureEntry,
   ...rest
 }) => {
-  const [showItem, setShowItem] = useState(false);
+  const [showItem, setShowItem] = useState(true);
 
   const changeItemVisibility = () => {
     setShowItem(!showItem);
@@ -29,7 +30,7 @@ const FormInput = ({
         numberOfLines={1}
         placeholder={placeholderText}
         placeholderTextColor="#666"
-        secureTextEntry={showItem}
+        secureTextEntry={showItem && showSecureEntry}
         {...rest}
       />
       {showEye ? (
