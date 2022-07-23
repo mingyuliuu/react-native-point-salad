@@ -11,7 +11,9 @@ import {
   signOut,
 } from "firebase/auth";
 
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, ref, set, onValue } from "firebase/database";
+import { getFirestore, setDoc, doc } from 'firebase/firestore';
+
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -30,6 +32,7 @@ let app = firebase.initializeApp(firebaseConfig);
 //export const auth = firebase.auth();
 export const auth = getAuth(app);
 export const db = getDatabase();
+export const fs = getFirestore();
 
 export const AuthContext = createContext();
 
@@ -42,13 +45,14 @@ export const Authentication = ({ children }) => {
         user,
         setUser,
         login: async (email, password) => {
-          await signInWithEmailAndPassword(email, password)
-            .catch((e) => {
-              console.log(e);
-              Alert.alert(null, "You've entered an invalid email and passward combination. Please try again!", [
-                { text: "OK" },
-              ]);
-            });
+          await signInWithEmailAndPassword(auth, email, password).catch((e) => {
+            console.log(e);
+            Alert.alert(
+              null,
+              "You've entered an invalid email and passward combination. Please try again!",
+              [{ text: "OK" }]
+            );
+          });
         },
         register: async (name, email, password) => {
           await createUserWithEmailAndPassword(auth, email, password)
@@ -57,6 +61,16 @@ export const Authentication = ({ children }) => {
                 name: name,
                 email: email,
                 password: password,
+                highestScore: 0,
+                profileImage: "../assets/anoyAvatar.png",
+              });
+
+              addDoc(doc(fs, "userData", newUser.user.uid), {
+                name: name,
+                email: email,
+                password: password,
+                highestScore: 0,
+                profileImage: "../assets/anoyAvatar.png",
               });
             })
             .catch((e) => {
@@ -69,6 +83,16 @@ export const Authentication = ({ children }) => {
         logout: async () => {
           try {
             await signOut(auth);
+          } catch (e) {
+            console.log(e);
+          }
+        },
+        getName: async () => {
+          try {
+            await onValue(ref(db, "userData/" + user.uid), (querySnapShot) => {
+              user.name = querySnapShot.val().name;
+              return querySnapShot.val().name;
+            });
           } catch (e) {
             console.log(e);
           }
