@@ -6,12 +6,36 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { AuthContext } from "../navigation/Authentication";
 import { windowHeight, windowWidth } from "../utils/Dimensions";
 
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { LinearGradient } from "expo-linear-gradient";
+
+import TomatoImage from "../assets/tomato.png";
+import CabbageImage from "../assets/cabbage.png";
+import LettuceImage from "../assets/lettuce.png";
+import CarrotImage from "../assets/carrot.png";
+import PotatoImage from "../assets/potato.png";
+import PepperImage from "../assets/pepper.png";
+
+const getVeggieImage = (veggie) => {
+  switch (veggie) {
+    case "tomato":
+      return Image.resolveAssetSource(TomatoImage).uri;
+    case "cabbage":
+      return Image.resolveAssetSource(CabbageImage).uri;
+    case "lettuce":
+      return Image.resolveAssetSource(LettuceImage).uri;
+    case "carrot":
+      return Image.resolveAssetSource(CarrotImage).uri;
+    case "potato":
+      return Image.resolveAssetSource(PotatoImage).uri;
+    case "pepper":
+      return Image.resolveAssetSource(PepperImage).uri;
+  }
+};
 
 const itemData = [
   {
@@ -20,11 +44,11 @@ const itemData = [
   },
   {
     num: 2,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    uri: "https://icons.iconarchive.com/icons/limav/flat-gradient-social/256/Twitter-icon.png",
   },
   {
     num: 3,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    uri: "https://icons.iconarchive.com/icons/limav/flat-gradient-social/256/Twitter-icon.png",
   },
   {
     num: 4,
@@ -38,25 +62,61 @@ const itemData = [
     num: 6,
     uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
   },
+  {
+    num: 7,
+    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+  },
+  {
+    num: 8,
+    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+  },
+  {
+    num: 9,
+    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+  },
 ];
 
-const myItemData = [
+const gameData = [
   {
-    num: 1,
-    uri: "https://icons.iconarchive.com/icons/limav/flat-gradient-social/256/Twitter-icon.png",
+    veggie: "carrot",
+    num: 0,
   },
   {
-    num: 2,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veggie: "cabbage",
+    num: 0,
   },
   {
-    num: 3,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veggie: "lettuce",
+    num: 0,
+  },
+  {
+    veggie: "pepper",
+    num: 0,
+  },
+  {
+    veggie: "potato",
+    num: 0,
+  },
+  {
+    veggie: "tomato",
+    num: 0,
   },
 ];
 
 const Item = ({ item }) => {
   return <Image style={styles.item} source={{ uri: item.uri }} />;
+};
+
+const VeggieItem = ({ item }) => {
+  return (
+    <View style={styles.veggieSymbol}>
+      <Image
+        style={styles.veggieImage}
+        source={{ uri: getVeggieImage(item.veggie) }}
+      />
+      <Text style={styles.veggieCount}>{item.num}</Text>
+    </View>
+  );
 };
 
 const GameScreen = ({ navigation }) => {
@@ -77,10 +137,17 @@ const GameScreen = ({ navigation }) => {
       </TouchableOpacity>
 
       <View style={styles.upperContainer}>
+        <TouchableOpacity
+          style={{ marginHorizontal: 15 }}
+          onPress={() => navigation.navigate("Instruction")}
+        >
+          <FontAwesome name="question-circle" size={50} color="#799c7b" />
+        </TouchableOpacity>
+
         <Text style={styles.text}>Current Score: {currentScore}</Text>
       </View>
 
-      <View style={styles.bottomContainer}>
+      <View style={styles.middleContainer}>
         <View style={styles.gridTop}>
           <FlatList
             data={itemData}
@@ -89,23 +156,62 @@ const GameScreen = ({ navigation }) => {
             keyExtractor={(item) => item.num}
           />
         </View>
+      </View>
 
-        <View style={styles.gridBottom}>
-          <FlatList
-            data={myItemData}
-            numColumns={3}
-            renderItem={Item}
-            keyExtractor={(item) => item.num}
-          />
+      <View style={styles.bottomContainer}>
+        <View style={styles.bottomLeftContainer}>
+          <View style={styles.subtitle}>
+            <Text style={styles.subtitleText}>Point Cards</Text>
+          </View>
+
+          <View style={styles.pointCardsContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <TouchableOpacity style={styles.pointCardWrapper}>
+                <Image
+                  resizeMode="cover"
+                  style={styles.pointCard}
+                  source={require("../assets/homebg.png")}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.pointCardWrapper}>
+                <Image
+                  resizeMode="stretch"
+                  style={styles.pointCard}
+                  source={require("../assets/homebg.png")}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.pointCardWrapper}>
+                <Image
+                  resizeMode="cover"
+                  style={styles.pointCard}
+                  source={require("../assets/homebg.png")}
+                />
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.instructionIcon}
-          onPress={() => navigation.navigate("Instruction")}
-        >
-          <FontAwesome name="question-circle" size={50} color="#799c7b" />
-        </TouchableOpacity>
+        <View style={styles.bottomRightContainer}>
+          <View style={styles.subtitle}>
+            <Text style={styles.subtitleText}>Vegetables</Text>
+          </View>
+
+          <View style={styles.veggiesContainer}>
+            <View style={styles.veggiesGrid}>
+              <FlatList
+                data={gameData}
+                numColumns={2}
+                renderItem={VeggieItem}
+                keyExtractor={(item) => item.veggie}
+              />
+            </View>
+          </View>
+        </View>
       </View>
+
+      <View style={styles.emptyFooterContainer}></View>
     </View>
   );
 };
@@ -124,25 +230,15 @@ const styles = StyleSheet.create({
     fontFamily: "Baloo2_400Regular",
     fontSize: 24,
     color: "#333333",
-    marginLeft: "8%",
   },
 
   gridTop: {
     flex: 3,
     width: windowWidth * 0.7,
-    borderWidth: 1.5,
-    borderRadius: 5,
-    borderColor: "red",
     marginTop: "15%",
-  },
-
-  gridBottom: {
-    flex: 1,
-    width: windowWidth * 0.7,
-    borderWidth: 1.5,
-    borderRadius: 5,
-    borderColor: "red",
-    marginTop: "5%",
+    borderRadius: 10,
+    backgroundColor: "white",
+    elevation: 10,
   },
 
   item: {
@@ -153,9 +249,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margin: 10,
     backgroundColor: "rgba(249, 180, 45, 0.25)",
-    borderWidth: 1.5,
     borderRadius: 5,
-    borderColor: "red",
   },
 
   upperContainer: {
@@ -169,7 +263,7 @@ const styles = StyleSheet.create({
 
   profileImage: {
     position: "absolute",
-    top: windowHeight / 7 - windowWidth / 10,
+    top: windowHeight / 9 - windowWidth / 10,
     right: "8%",
     alignSelf: "flex-end",
     width: windowWidth / 5,
@@ -187,16 +281,101 @@ const styles = StyleSheet.create({
     width: windowWidth / 5,
   },
 
-  bottomContainer: {
-    flex: 6,
+  middleContainer: {
+    flex: 5,
     width: "100%",
     justifyContent: "flex-end",
     alignItems: "center",
-    borderTopRightRadius: 30,
   },
 
-  instructionIcon: {
-    margin: "8%",
-    alignSelf: "flex-start",
+  bottomContainer: {
+    flex: 2.5,
+    width: "90%",
+    flexDirection: "row",
+  },
+
+  bottomLeftContainer: {
+    flex: 2,
+    marginRight: 10,
+    height: "100%",
+    paddingVertical: 15,
+    flexDirection: "column",
+  },
+
+  bottomRightContainer: {
+    flex: 1,
+    height: "100%",
+    paddingVertical: 15,
+    flexDirection: "column",
+  },
+
+  subtitle: {
+    paddingHorizontal: 10,
+    marginVertical: 10,
+  },
+
+  subtitleText: {
+    fontFamily: "Lato_400Regular",
+    fontSize: 16,
+    color: "#585a61",
+  },
+
+  pointCardsContainer: {
+    flex: 1,
+  },
+
+  pointCardWrapper: {
+    height: "90%",
+    elevation: 5,
+    backgroundColor: "white",
+    marginHorizontal: 5,
+    borderRadius: 15,
+    aspectRatio: 5 / 7,
+  },
+
+  pointCard: {
+    borderRadius: 15,
+    height: "100%",
+    aspectRatio: 5 / 7,
+  },
+
+  emptyFooterContainer: {
+    flex: 0.5,
+  },
+
+  veggiesContainer: {
+    flex: 0.95,
+    backgroundColor: "white",
+    borderRadius: 10,
+    elevation: 3,
+  },
+
+  veggiesGrid: {
+    flex: 2,
+  },
+
+  veggieSymbol: {
+    flex: 1,
+    aspectRatio: 4 / 3,
+    maxWidth: "50%",
+    marginVertical: 2,
+    borderRadius: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  veggieImage: {
+    flex: 1,
+    resizeMode: "stretch",
+    aspectRatio: 1,
+    maxWidth: "50%", // 100% devided by the number of rows you want
+  },
+
+  veggieCount: {
+    fontFamily: "Lato_400Regular",
+    fontSize: 12,
+    color: "#585a61",
+    marginRight: "10%",
   },
 });
