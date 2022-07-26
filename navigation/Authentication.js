@@ -11,9 +11,9 @@ import {
   signOut,
 } from "firebase/auth";
 
-import { getDatabase, ref, set, onValue } from "firebase/database";
-import { getFirestore, setDoc, doc } from 'firebase/firestore';
-
+import { getDatabase, ref, set } from "firebase/database";
+import { getFirestore, doc } from 'firebase/firestore';
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -28,11 +28,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app = firebase.initializeApp(firebaseConfig);
-//export const auth = firebase.auth();
+export const app = firebase.initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getDatabase();
 export const fs = getFirestore();
+export const st = getStorage(app);
 
 export const AuthContext = createContext();
 
@@ -86,17 +86,7 @@ export const Authentication = ({ children }) => {
           } catch (e) {
             console.log(e);
           }
-        },
-        getName: async () => {
-          try {
-            await onValue(ref(db, "userData/" + user.uid), (querySnapShot) => {
-              user.name = querySnapShot.val().name;
-              return querySnapShot.val().name;
-            });
-          } catch (e) {
-            console.log(e);
-          }
-        },
+        }
       }}
     >
       {children}

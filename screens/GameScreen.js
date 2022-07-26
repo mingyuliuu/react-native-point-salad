@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { AuthContext } from "../navigation/Authentication";
+import { AuthContext, st } from "../navigation/Authentication";
 import { windowHeight, windowWidth } from "../utils/Dimensions";
+import { ref, getDownloadURL, listAll } from "firebase/storage";
 
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 
@@ -40,39 +41,39 @@ const getVeggieImage = (veggie) => {
 const itemData = [
   {
     num: 1,
-    uri: "https://icons.iconarchive.com/icons/limav/flat-gradient-social/256/Twitter-icon.png",
+    veg: "cabbage",
   },
   {
     num: 2,
-    uri: "https://icons.iconarchive.com/icons/limav/flat-gradient-social/256/Twitter-icon.png",
+    veg: "carrot",
   },
   {
     num: 3,
-    uri: "https://icons.iconarchive.com/icons/limav/flat-gradient-social/256/Twitter-icon.png",
+    veg: "potato",
   },
   {
     num: 4,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veg: "tomato",
   },
   {
     num: 5,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veg: "cabbage",
   },
   {
     num: 6,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veg: "pepper",
   },
   {
     num: 7,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veg: "cabbage",
   },
   {
     num: 8,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veg: "tomato",
   },
   {
     num: 9,
-    uri: "https://icons.iconarchive.com/icons/designbolts/free-instagram/256/Active-Instagram-1-icon.png",
+    veg: "tomato",
   },
 ];
 
@@ -103,10 +104,6 @@ const gameData = [
   },
 ];
 
-const Item = ({ item }) => {
-  return <Image style={styles.item} source={{ uri: item.uri }} />;
-};
-
 const VeggieItem = ({ item }) => {
   return (
     <View style={styles.veggieSymbol}>
@@ -122,6 +119,29 @@ const VeggieItem = ({ item }) => {
 const GameScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [currentScore, setCurrentScore] = useState(0);
+
+  const [images, setImages] = useState({});
+  const listRef = ref(st, "/");
+
+  const fetchFromStorage = async () => {
+    const reference = await listAll(listRef);
+    var imageHolder = {};
+    
+    for(let i = 0; i < reference.items.length; i++) {
+       await getDownloadURL(ref(st, reference.items[i])).then((url) => {
+        let name = url.substring(0, url.indexOf("?")).substring(url.substring(0, url.indexOf("?")).lastIndexOf("/") + 1);
+          imageHolder[name] = url;
+       });
+    }
+    
+    return imageHolder;
+  };
+
+  console.log(images);
+
+  useEffect(() => {
+    fetchFromStorage().then((images) => setImages(images));
+  }, [images]);
 
   return (
     <View style={styles.container}>
@@ -152,7 +172,9 @@ const GameScreen = ({ navigation }) => {
           <FlatList
             data={itemData}
             numColumns={3}
-            renderItem={Item}
+            renderItem={({ item }) => {
+              return <Image style={styles.item} source={{ uri: images[item.veg + ".png"] }} />;
+            }}
             keyExtractor={(item) => item.num}
           />
         </View>
