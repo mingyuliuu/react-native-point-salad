@@ -38,72 +38,6 @@ const getVeggieImage = (veggie) => {
   }
 };
 
-const itemData = [
-  {
-    num: 1,
-    veg: "cabbage",
-  },
-  {
-    num: 2,
-    veg: "carrot",
-  },
-  {
-    num: 3,
-    veg: "potato",
-  },
-  {
-    num: 4,
-    veg: "tomato",
-  },
-  {
-    num: 5,
-    veg: "cabbage",
-  },
-  {
-    num: 6,
-    veg: "pepper",
-  },
-  {
-    num: 7,
-    veg: "cabbage",
-  },
-  {
-    num: 8,
-    veg: "tomato",
-  },
-  {
-    num: 9,
-    veg: "tomato",
-  },
-];
-
-const gameData = [
-  {
-    veggie: "carrot",
-    num: 0,
-  },
-  {
-    veggie: "cabbage",
-    num: 0,
-  },
-  {
-    veggie: "lettuce",
-    num: 0,
-  },
-  {
-    veggie: "pepper",
-    num: 0,
-  },
-  {
-    veggie: "potato",
-    num: 0,
-  },
-  {
-    veggie: "tomato",
-    num: 0,
-  },
-];
-
 const VeggieItem = ({ item }) => {
   return (
     <View style={styles.veggieSymbol}>
@@ -119,6 +53,90 @@ const VeggieItem = ({ item }) => {
 const GameScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [currentScore, setCurrentScore] = useState(0);
+  const [cards, setCards] = useState([
+    {
+      num: 1,
+      veg: "cabbage",
+      rule: "cabbageR1",
+      selected: false,
+    },
+    {
+      num: 2,
+      veg: "carrot",
+      rule: "carrotR1",
+      selected: false,
+    },
+    {
+      num: 3,
+      veg: "potato",
+      rule: "potatoR1",
+      selected: false,
+    },
+    {
+      num: 4,
+      veg: "tomato",
+      rule: "tomatoR1",
+      selected: false,
+    },
+    {
+      num: 5,
+      veg: "cabbage",
+      rule: "cabbageR2",
+      selected: false,
+    },
+    {
+      num: 6,
+      veg: "pepper",
+      rule: "pepperR1",
+      selected: false,
+    },
+    {
+      num: 7,
+      veg: "carrot",
+      rule: "carrotR2",
+      selected: false,
+    },
+    {
+      num: 8,
+      veg: "tomato",
+      rule: "tomatoR2",
+      selected: false,
+    },
+    {
+      num: 9,
+      veg: "lettuce",
+      rule: "lettuceR1",
+      selected: false,
+    },
+  ]);
+
+  const [myCards, setMyCards] = useState([]);
+  const [myVeggies, setMyVeggies] = useState([
+    {
+      veggie: "carrot",
+      num: 0,
+    },
+    {
+      veggie: "cabbage",
+      num: 0,
+    },
+    {
+      veggie: "lettuce",
+      num: 0,
+    },
+    {
+      veggie: "pepper",
+      num: 0,
+    },
+    {
+      veggie: "potato",
+      num: 0,
+    },
+    {
+      veggie: "tomato",
+      num: 0,
+    },
+  ]);
 
   const [images, setImages] = useState({});
   const listRef = ref(st, "/");
@@ -126,22 +144,44 @@ const GameScreen = ({ navigation }) => {
   const fetchFromStorage = async () => {
     const reference = await listAll(listRef);
     var imageHolder = {};
-    
-    for(let i = 0; i < reference.items.length; i++) {
-       await getDownloadURL(ref(st, reference.items[i])).then((url) => {
-        let name = url.substring(0, url.indexOf("?")).substring(url.substring(0, url.indexOf("?")).lastIndexOf("/") + 1);
-          imageHolder[name] = url;
-       });
+
+    for (let i = 0; i < reference.items.length; i++) {
+      await getDownloadURL(ref(st, reference.items[i])).then((url) => {
+        let name = url
+          .substring(0, url.indexOf("?"))
+          .substring(url.substring(0, url.indexOf("?")).lastIndexOf("/") + 1);
+        imageHolder[name] = url;
+      });
     }
-    
+
     return imageHolder;
   };
-
-  console.log(images);
 
   useEffect(() => {
     fetchFromStorage().then((images) => setImages(images));
   }, [images]);
+
+  const isActivated = () => {
+    let sum = 0;
+    cards.forEach((card) => {
+      sum += card.num > 3 ? card.selected * 1 : card.selected * 2;
+    });
+
+    return sum == 2;
+  };
+
+  const getCards = () => {
+    cards.forEach((card) => {
+      if (card.num > 3 && card.selected) {
+        let temp = [...myVeggies];
+        temp.forEach((item) => {
+          if (item.veggie == card.veg) item.num++;
+        });
+        setMyVeggies(temp);
+      }
+      card.selected = false;
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -170,15 +210,75 @@ const GameScreen = ({ navigation }) => {
       <View style={styles.middleContainer}>
         <View style={styles.gridTop}>
           <FlatList
-            data={itemData}
+            data={cards}
             numColumns={3}
             renderItem={({ item }) => {
-              return <Image style={styles.item} source={{ uri: images[item.veg + ".png"] }} />;
+              return item.num > 3 ? (
+                <TouchableOpacity
+                  style={[
+                    styles.itemWrapper,
+                    item.selected
+                      ? {
+                          elevation: 15,
+                          borderWidth: 2,
+                          borderColor: "#abb8ac",
+                        }
+                      : {},
+                  ]}
+                  onPress={() => {
+                    let temp = [...cards];
+                    temp[item.num - 1].selected = !temp[item.num - 1].selected;
+                    setCards(temp);
+                  }}
+                >
+                  <Image
+                    style={styles.item}
+                    source={{ uri: images[item.veg + ".png"] }}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.itemWrapper,
+                    item.selected
+                      ? {
+                          elevation: 15,
+                          borderWidth: 2,
+                          borderColor: "#abb8ac",
+                        }
+                      : {},
+                  ]}
+                  onPress={() => {
+                    cards[item.num - 1].selected =
+                      !cards[item.num - 1].selected;
+                  }}
+                >
+                  <Image
+                    style={styles.item}
+                    source={{ uri: images[item.rule + ".png"] }}
+                  />
+                </TouchableOpacity>
+              );
             }}
             keyExtractor={(item) => item.num}
           />
         </View>
       </View>
+
+      <TouchableOpacity
+        style={styles.addCardWrapper}
+        onPress={() => getCards()}
+      >
+        <Image
+          resizeMode="cover"
+          style={styles.addCardIcon}
+          source={
+            isActivated()
+              ? require("../assets/activated.png")
+              : require("../assets/inactivated.png")
+          }
+        />
+      </TouchableOpacity>
 
       <View style={styles.bottomContainer}>
         <View style={styles.bottomLeftContainer}>
@@ -223,7 +323,7 @@ const GameScreen = ({ navigation }) => {
           <View style={styles.veggiesContainer}>
             <View style={styles.veggiesGrid}>
               <FlatList
-                data={gameData}
+                data={myVeggies}
                 numColumns={2}
                 renderItem={VeggieItem}
                 keyExtractor={(item) => item.veggie}
@@ -263,7 +363,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
 
-  item: {
+  itemWrapper: {
     flex: 1,
     resizeMode: "stretch",
     aspectRatio: 5 / 7,
@@ -271,6 +371,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margin: 10,
     backgroundColor: "rgba(249, 180, 45, 0.25)",
+    borderRadius: 5,
+  },
+
+  item: {
+    flex: 1,
+    resizeMode: "stretch",
+    aspectRatio: 5 / 7,
     borderRadius: 5,
   },
 
@@ -399,5 +506,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#585a61",
     marginRight: "10%",
+  },
+
+  addCardWrapper: {
+    position: "absolute",
+    top: (windowHeight / 8.5) * 6 - windowWidth / 8,
+  },
+
+  addCardIcon: {
+    width: windowWidth / 8,
+    height: windowWidth / 8,
   },
 });
