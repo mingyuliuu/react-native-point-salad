@@ -7,10 +7,13 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  TextComponent,
 } from "react-native";
 import { AuthContext, st } from "../navigation/Authentication";
 import { windowHeight, windowWidth } from "../utils/Dimensions";
 import { ref, getDownloadURL, listAll } from "firebase/storage";
+
+import { fs } from "../navigation/Authentication";
 
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 
@@ -20,6 +23,7 @@ import LettuceImage from "../assets/lettuce.png";
 import CarrotImage from "../assets/carrot.png";
 import PotatoImage from "../assets/potato.png";
 import PepperImage from "../assets/pepper.png";
+import { collection, collectionGroup, getDocs } from "firebase/firestore";
 
 const getVeggieImage = (veggie) => {
   switch (veggie) {
@@ -53,62 +57,7 @@ const VeggieItem = ({ item }) => {
 const GameScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [currentScore, setCurrentScore] = useState(0);
-  const [cards, setCards] = useState([
-    {
-      num: 1,
-      veg: "cabbage",
-      rule: "cabbageR1",
-      selected: false,
-    },
-    {
-      num: 2,
-      veg: "carrot",
-      rule: "carrotR1",
-      selected: false,
-    },
-    {
-      num: 3,
-      veg: "potato",
-      rule: "potatoR1",
-      selected: false,
-    },
-    {
-      num: 4,
-      veg: "tomato",
-      rule: "tomatoR1",
-      selected: false,
-    },
-    {
-      num: 5,
-      veg: "cabbage",
-      rule: "cabbageR2",
-      selected: false,
-    },
-    {
-      num: 6,
-      veg: "pepper",
-      rule: "pepperR1",
-      selected: false,
-    },
-    {
-      num: 7,
-      veg: "carrot",
-      rule: "carrotR2",
-      selected: false,
-    },
-    {
-      num: 8,
-      veg: "tomato",
-      rule: "tomatoR2",
-      selected: false,
-    },
-    {
-      num: 9,
-      veg: "lettuce",
-      rule: "lettuceR1",
-      selected: false,
-    },
-  ]);
+  const [cards, setCards] = useState([]);
 
   const [myCards, setMyCards] = useState([]);
   const [myVeggies, setMyVeggies] = useState([
@@ -137,6 +86,67 @@ const GameScreen = ({ navigation }) => {
       num: 0,
     },
   ]);
+
+  const [cardPile, setCardPile] = useState([]);
+  const [gameCardPile, setGameCardPile] = useState([]);
+
+  const getCardPile = async () => {
+    const cardsRef = collectionGroup(fs, "cards");
+    let tempCardPile = [];
+
+    const allCards = await getDocs(cardsRef);
+    allCards.forEach((card) => {
+      tempCardPile.push(card.data());
+    });
+
+    return tempCardPile;
+  };
+
+  const getGameCardPile = () => {
+    let tempCardPile = [];
+
+    for (let i = 0; i < 50; i++) {
+      let random = Math.floor(Math.random() * cardPile.length);
+      tempCardPile.push(cardPile[random]);
+    }
+
+    setGameCardPile(tempCardPile);
+  };
+
+  const getInitCards = () => {
+    if (
+      gameCardPile.length == 0 ||
+      gameCardPile[0] == undefined ||
+      gameCardPile[49] == undefined
+    )
+      return;
+
+    let tempCardPile = [];
+    for (var i = 0; i < 9; i++) {
+      let tempCard = gameCardPile.shift();
+
+      tempCardPile[i] = {
+        num: i + 1,
+        veg: tempCard != undefined ? tempCard.veg : "tomato",
+        rule: tempCard != undefined ? tempCard.rule : "tomatoR1",
+        selected: false,
+      };
+    }
+
+    setCards(tempCardPile);
+  };
+
+  useEffect(() => {
+    getCardPile().then((card) => setCardPile(card));
+  }, []);
+
+  useEffect(() => {
+    getGameCardPile();
+  }, [cardPile]);
+
+  useEffect(() => {
+    getInitCards();
+  }, [gameCardPile]);
 
   const [images, setImages] = useState({});
   const listRef = ref(st, "/");
