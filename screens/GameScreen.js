@@ -108,7 +108,7 @@ const GameScreen = ({ navigation }) => {
   const getGameCardPile = () => {
     let tempCardPile = [];
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
       let random = Math.floor(Math.random() * cardPile.length);
       tempCardPile.push(cardPile[random]);
     }
@@ -121,7 +121,7 @@ const GameScreen = ({ navigation }) => {
     if (
       gameCardPile.length == 0 ||
       gameCardPile[0] == undefined ||
-      gameCardPile[19] == undefined
+      gameCardPile[49] == undefined
     )
       return;
 
@@ -186,11 +186,13 @@ const GameScreen = ({ navigation }) => {
   // A player is allowed to take the card if there's only 1 veg card remaining
   const isActivated = () => {
     let sum = 0;
+    let num = 0;
     cards.forEach((card) => {
       sum += card.num > 3 ? card.selected * 1 : card.selected * 2;
+      num += card.veg != "empty";
     });
 
-    return sum == 2 || cards.length == 1;
+    return sum == 2 || num == 1;
   };
 
   // Take cards, update player's veg and point cards, and load new cards from card pile
@@ -326,7 +328,12 @@ const GameScreen = ({ navigation }) => {
           <FontAwesome name="question-circle" size={50} color="#799c7b" />
         </TouchableOpacity>
 
-        <Text style={styles.text}>Current Score: {currentScore}</Text>
+        <View>
+          <Text style={styles.text}>Current Score: {currentScore}</Text>
+          <Text style={styles.textSmall}>
+            Cards remaining: {gameCardPile.length}
+          </Text>
+        </View>
       </View>
 
       {/* The container showing the card pile. */}
@@ -475,6 +482,13 @@ const styles = StyleSheet.create({
     fontFamily: "Baloo2_400Regular",
     fontSize: 24,
     color: "#333333",
+  },
+
+  textSmall: {
+    alignItems: "center",
+    fontFamily: "Baloo2_400Regular",
+    fontSize: 16,
+    color: "#5b5b5b",
   },
 
   gridTop: {
