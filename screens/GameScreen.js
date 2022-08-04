@@ -24,6 +24,33 @@ import PotatoImage from "../assets/potato.png";
 import PepperImage from "../assets/pepper.png";
 import { collectionGroup, getDocs } from "firebase/firestore";
 
+const initVeggies = [
+  {
+    veggie: "cabbage",
+    num: 0,
+  },
+  {
+    veggie: "carrot",
+    num: 0,
+  },
+  {
+    veggie: "lettuce",
+    num: 0,
+  },
+  {
+    veggie: "pepper",
+    num: 0,
+  },
+  {
+    veggie: "potato",
+    num: 0,
+  },
+  {
+    veggie: "tomato",
+    num: 0,
+  },
+];
+
 const getVeggieImage = (veggie) => {
   switch (veggie) {
     case "tomato":
@@ -58,32 +85,7 @@ const GameScreen = ({ navigation }) => {
   const [currentScore, setCurrentScore] = useState(0);
 
   const [myCards, setMyCards] = useState([]);
-  const [myVeggies, setMyVeggies] = useState([
-    {
-      veggie: "carrot",
-      num: 0,
-    },
-    {
-      veggie: "cabbage",
-      num: 0,
-    },
-    {
-      veggie: "lettuce",
-      num: 0,
-    },
-    {
-      veggie: "pepper",
-      num: 0,
-    },
-    {
-      veggie: "potato",
-      num: 0,
-    },
-    {
-      veggie: "tomato",
-      num: 0,
-    },
-  ]);
+  const [myVeggies, setMyVeggies] = useState(initVeggies);
 
   const [cardPile, setCardPile] = useState([]);
   const [gameCardPile, setGameCardPile] = useState([]);
@@ -106,7 +108,7 @@ const GameScreen = ({ navigation }) => {
   const getGameCardPile = () => {
     let tempCardPile = [];
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 20; i++) {
       let random = Math.floor(Math.random() * cardPile.length);
       tempCardPile.push(cardPile[random]);
     }
@@ -119,7 +121,7 @@ const GameScreen = ({ navigation }) => {
     if (
       gameCardPile.length == 0 ||
       gameCardPile[0] == undefined ||
-      gameCardPile[49] == undefined
+      gameCardPile[19] == undefined
     )
       return;
 
@@ -138,7 +140,11 @@ const GameScreen = ({ navigation }) => {
     setCards(tempCardPile);
   };
 
+  // Game initialization
   useEffect(() => {
+    setMyCards([]);
+    setMyVeggies(initVeggies);
+    setCurrentScore(0);
     getCardPile().then((card) => setCardPile(card));
   }, []);
 
@@ -155,6 +161,7 @@ const GameScreen = ({ navigation }) => {
   const [images, setImages] = useState({});
   const listRef = ref(st, "/");
 
+  // Load all images from Firebase Storage
   const fetchFromStorage = async () => {
     const reference = await listAll(listRef);
     var imageHolder = {};
@@ -176,25 +183,74 @@ const GameScreen = ({ navigation }) => {
   }, [images]);
 
   // Check whether a player is allowed to take cards (either 2 veg cards or 1 point card)
+  // A player is allowed to take the card if there's only 1 veg card remaining
   const isActivated = () => {
     let sum = 0;
     cards.forEach((card) => {
       sum += card.num > 3 ? card.selected * 1 : card.selected * 2;
     });
 
-    return sum == 2;
+    return sum == 2 || cards.length == 1;
   };
 
-  // Take veggie cards by increasing the player's respective veg count
+  // Take cards, update player's veg and point cards, and load new cards from card pile
   const getCards = () => {
     cards.forEach((card) => {
       if (card.num > 3 && card.selected) {
+        // Take a veggie card => cards above will drop (and flip)
         let temp = [...myVeggies];
         temp.forEach((item) => {
           if (item.veggie == card.veg) item.num++;
         });
         setMyVeggies(temp);
+
+        let tempCard = gameCardPile.shift();
+        let tempCardPile = cards;
+
+        tempCardPile[card.num - 1] = {
+          num: card.num,
+          veg: tempCardPile[card.num - 4].veg,
+          rule: tempCardPile[card.num - 4].rule,
+          selected: false,
+        };
+
+        if (card.num < 7) {
+          tempCardPile[card.num - 4] = {
+            num: card.num - 3,
+            veg: tempCard != undefined ? tempCard.veg : "empty",
+            rule: tempCard != undefined ? tempCard.rule : "empty",
+            selected: false,
+          };
+        } else {
+          tempCardPile[card.num - 4] = {
+            num: card.num - 3,
+            veg: tempCardPile[card.num - 7].veg,
+            rule: tempCardPile[card.num - 7].rule,
+            selected: false,
+          };
+
+          tempCardPile[card.num - 7] = {
+            num: card.num - 6,
+            veg: tempCard != undefined ? tempCard.veg : "empty",
+            rule: tempCard != undefined ? tempCard.rule : "empty",
+            selected: false,
+          };
+        }
+
+        setCards(tempCardPile);
       } else if (card.num <= 3 && card.selected) {
+        // Take a point card => fetching a new point card
+        let tempCard = gameCardPile.shift();
+        let tempCardPile = cards;
+
+        tempCardPile[card.num - 1] = {
+          num: card.num,
+          veg: tempCard != undefined ? tempCard.veg : "empty",
+          rule: tempCard != undefined ? tempCard.rule : "empty",
+          selected: false,
+        };
+        setCards(tempCardPile);
+
         setMyCards([
           {
             rule: card.rule,
@@ -203,9 +259,49 @@ const GameScreen = ({ navigation }) => {
           ...myCards,
         ]);
       }
-      card.selected = false;
     });
   };
+
+  // Update score when the user's card pile or veggie pile change
+  const calculateScore = () => {
+    let tempScore = 0;
+
+    myCards.forEach((card) => {
+      if (card.rule === "cabbageR1") {
+        tempScore += myVeggies[4].num * 2 - myVeggies[5].num;
+      } else if (card.rule === "cabbageR2") {
+        tempScore += Math.min(myVeggies[4].num, myVeggies[1].num) * 5;
+      } else if (card.rule === "carrotR1") {
+        tempScore += myVeggies[5].num * 2 - myVeggies[0].num;
+      } else if (card.rule === "carrotR2") {
+        tempScore += Math.min(myVeggies[0].num, myVeggies[5].num) * 5;
+      } else if (card.rule === "lettuceR1") {
+        tempScore += myVeggies[0].num * 2 - myVeggies[1].num;
+      } else if (card.rule === "lettuceR2") {
+        tempScore +=
+          Math.min(myVeggies[1].num, myVeggies[3].num, myVeggies[5].num) * 8;
+      } else if (card.rule === "pepperR1") {
+        tempScore += myVeggies[1].num * 2 - myVeggies[2].num;
+      } else if (card.rule === "pepperR2") {
+        tempScore +=
+          Math.min(myVeggies[0].num, myVeggies[2].num, myVeggies[4].num) * 8;
+      } else if (card.rule === "potatoR1") {
+        tempScore += myVeggies[2].num * 2 - myVeggies[3].num;
+      } else if (card.rule === "potatoR2") {
+        tempScore += Math.min(myVeggies[2].num, myVeggies[3].num) * 5;
+      } else if (card.rule === "tomatoR1") {
+        tempScore += myVeggies[3].num * 2 - myVeggies[4].num;
+      } else if (card.rule === "tomatoR2") {
+        tempScore += Math.min(myVeggies[1].num, myVeggies[2].num) * 5;
+      }
+    });
+
+    setCurrentScore(tempScore);
+  };
+
+  useEffect(() => {
+    calculateScore();
+  }, [myCards, myVeggies]);
 
   return (
     <View style={styles.container}>
@@ -240,7 +336,9 @@ const GameScreen = ({ navigation }) => {
             data={cards}
             numColumns={3}
             renderItem={({ item }) => {
-              return item.num > 3 ? (
+              return item.veg == "empty" ? (
+                <View style={styles.itemWrapper} />
+              ) : item.num > 3 ? (
                 <TouchableOpacity
                   style={[
                     styles.itemWrapper,
