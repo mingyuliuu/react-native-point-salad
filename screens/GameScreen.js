@@ -7,7 +7,6 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  TextComponent,
 } from "react-native";
 import { AuthContext, st } from "../navigation/Authentication";
 import { windowHeight, windowWidth } from "../utils/Dimensions";
@@ -23,7 +22,7 @@ import LettuceImage from "../assets/lettuce.png";
 import CarrotImage from "../assets/carrot.png";
 import PotatoImage from "../assets/potato.png";
 import PepperImage from "../assets/pepper.png";
-import { collection, collectionGroup, getDocs } from "firebase/firestore";
+import { collectionGroup, getDocs } from "firebase/firestore";
 
 const getVeggieImage = (veggie) => {
   switch (veggie) {
@@ -57,7 +56,6 @@ const VeggieItem = ({ item }) => {
 const GameScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [currentScore, setCurrentScore] = useState(0);
-  const [cards, setCards] = useState([]);
 
   const [myCards, setMyCards] = useState([]);
   const [myVeggies, setMyVeggies] = useState([
@@ -89,7 +87,9 @@ const GameScreen = ({ navigation }) => {
 
   const [cardPile, setCardPile] = useState([]);
   const [gameCardPile, setGameCardPile] = useState([]);
+  const [cards, setCards] = useState([]);
 
+  // Fetch all cards from the available cards stored in Firestore
   const getCardPile = async () => {
     const cardsRef = collectionGroup(fs, "cards");
     let tempCardPile = [];
@@ -102,6 +102,7 @@ const GameScreen = ({ navigation }) => {
     return tempCardPile;
   };
 
+  // Get 50 random cards as the card pile for this game
   const getGameCardPile = () => {
     let tempCardPile = [];
 
@@ -113,6 +114,7 @@ const GameScreen = ({ navigation }) => {
     setGameCardPile(tempCardPile);
   };
 
+  // Get the initial 9 cards from the game card pile.
   const getInitCards = () => {
     if (
       gameCardPile.length == 0 ||
@@ -140,10 +142,12 @@ const GameScreen = ({ navigation }) => {
     getCardPile().then((card) => setCardPile(card));
   }, []);
 
+  // Put 50 random cards in the card pile for this game once available cards load up
   useEffect(() => {
     getGameCardPile();
   }, [cardPile]);
 
+  // Put 9 cards in the initial card pile once game card pile loads up
   useEffect(() => {
     getInitCards();
   }, [gameCardPile]);
@@ -171,6 +175,7 @@ const GameScreen = ({ navigation }) => {
     fetchFromStorage().then((images) => setImages(images));
   }, [images]);
 
+  // Check whether a player is allowed to take cards (either 2 veg cards or 1 point card)
   const isActivated = () => {
     let sum = 0;
     cards.forEach((card) => {
@@ -180,6 +185,7 @@ const GameScreen = ({ navigation }) => {
     return sum == 2;
   };
 
+  // Take veggie cards by increasing the player's respective veg count
   const getCards = () => {
     cards.forEach((card) => {
       if (card.num > 3 && card.selected) {
@@ -188,6 +194,14 @@ const GameScreen = ({ navigation }) => {
           if (item.veggie == card.veg) item.num++;
         });
         setMyVeggies(temp);
+      } else if (card.num <= 3 && card.selected) {
+        setMyCards([
+          {
+            rule: card.rule,
+            key: myCards.length,
+          },
+          ...myCards,
+        ]);
       }
       card.selected = false;
     });
@@ -195,6 +209,7 @@ const GameScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* The profile icon (with an absolute position to overlay two containers). */}
       <TouchableOpacity
         style={styles.profileImage}
         onPress={() => navigation.navigate("Profile")}
@@ -206,6 +221,7 @@ const GameScreen = ({ navigation }) => {
         ></Image>
       </TouchableOpacity>
 
+      {/* The container showing the instructions icon and current score. */}
       <View style={styles.upperContainer}>
         <TouchableOpacity
           style={{ marginHorizontal: 15 }}
@@ -217,6 +233,7 @@ const GameScreen = ({ navigation }) => {
         <Text style={styles.text}>Current Score: {currentScore}</Text>
       </View>
 
+      {/* The container showing the card pile. */}
       <View style={styles.middleContainer}>
         <View style={styles.gridTop}>
           <FlatList
@@ -259,8 +276,9 @@ const GameScreen = ({ navigation }) => {
                       : {},
                   ]}
                   onPress={() => {
-                    cards[item.num - 1].selected =
-                      !cards[item.num - 1].selected;
+                    let temp = [...cards];
+                    temp[item.num - 1].selected = !temp[item.num - 1].selected;
+                    setCards(temp);
                   }}
                 >
                   <Image
@@ -275,9 +293,10 @@ const GameScreen = ({ navigation }) => {
         </View>
       </View>
 
+      {/* The + icon that allows a player to take cards from the pile. */}
       <TouchableOpacity
         style={styles.addCardWrapper}
-        onPress={() => getCards()}
+        onPress={isActivated() ? () => getCards() : () => {}}
       >
         <Image
           resizeMode="cover"
@@ -290,46 +309,41 @@ const GameScreen = ({ navigation }) => {
         />
       </TouchableOpacity>
 
+      {/* The container showing all the point cards the player currently has. */}
       <View style={styles.bottomContainer}>
         <View style={styles.bottomLeftContainer}>
           <View style={styles.subtitle}>
             <Text style={styles.subtitleText}>Point Cards</Text>
           </View>
 
+          {/* Using a horizontally scrollable list. */}
           <View style={styles.pointCardsContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <TouchableOpacity style={styles.pointCardWrapper}>
-                <Image
-                  resizeMode="cover"
-                  style={styles.pointCard}
-                  source={require("../assets/homebg.png")}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.pointCardWrapper}>
-                <Image
-                  resizeMode="stretch"
-                  style={styles.pointCard}
-                  source={require("../assets/homebg.png")}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.pointCardWrapper}>
-                <Image
-                  resizeMode="cover"
-                  style={styles.pointCard}
-                  source={require("../assets/homebg.png")}
-                />
-              </TouchableOpacity>
+              {myCards.map((pointCard) => {
+                return (
+                  <TouchableOpacity
+                    key={pointCard.key}
+                    style={styles.pointCardWrapper}
+                  >
+                    <Image
+                      resizeMode="cover"
+                      style={styles.pointCard}
+                      source={{ uri: images[pointCard.rule + ".png"] }}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
         </View>
 
+        {/* The container showing how many of each vegetable the player currently has. */}
         <View style={styles.bottomRightContainer}>
           <View style={styles.subtitle}>
             <Text style={styles.subtitleText}>Vegetables</Text>
           </View>
 
+          {/* Displaying in 2 columns. */}
           <View style={styles.veggiesContainer}>
             <View style={styles.veggiesGrid}>
               <FlatList
@@ -343,6 +357,7 @@ const GameScreen = ({ navigation }) => {
         </View>
       </View>
 
+      {/* To leave space at the bottom of the screen. */}
       <View style={styles.emptyFooterContainer}></View>
     </View>
   );
