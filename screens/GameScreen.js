@@ -7,6 +7,8 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  ImageBackground,
 } from "react-native";
 import { AuthContext, st } from "../navigation/Authentication";
 import { windowHeight, windowWidth } from "../utils/Dimensions";
@@ -22,7 +24,13 @@ import LettuceImage from "../assets/lettuce.png";
 import CarrotImage from "../assets/carrot.png";
 import PotatoImage from "../assets/potato.png";
 import PepperImage from "../assets/pepper.png";
-import { collectionGroup, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collectionGroup,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
 
 const initVeggies = [
   {
@@ -82,6 +90,24 @@ const VeggieItem = ({ item }) => {
 
 const GameScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
+  const [userData, setUserData] = useState(null);
+
+  const getUser = async () => {
+    const userRef = doc(fs, "userData", user.uid);
+
+    const currentUser = await getDoc(userRef).then((documentSnapshot) => {
+      if (documentSnapshot.exists) {
+        return documentSnapshot.data();
+      }
+    });
+
+    return currentUser;
+  };
+
+  useEffect(() => {
+    getUser().then((user) => setUserData(user));
+  }, [userData]);
+
   const [currentScore, setCurrentScore] = useState(0);
 
   const [myCards, setMyCards] = useState([]);
@@ -90,6 +116,8 @@ const GameScreen = ({ navigation }) => {
   const [cardPile, setCardPile] = useState([]);
   const [gameCardPile, setGameCardPile] = useState([]);
   const [cards, setCards] = useState([]);
+
+  const [modalVisibility, setModalVisibility] = useState(false);
 
   // Fetch all cards from the available cards stored in Firestore
   const getCardPile = async () => {
@@ -141,11 +169,15 @@ const GameScreen = ({ navigation }) => {
   };
 
   // Game initialization
-  useEffect(() => {
+  const initGame = () => {
     setMyCards([]);
     setMyVeggies(initVeggies);
     setCurrentScore(0);
     getCardPile().then((card) => setCardPile(card));
+  };
+
+  useEffect(() => {
+    initGame();
   }, []);
 
   // Put 50 random cards in the card pile for this game once available cards load up
@@ -191,7 +223,7 @@ const GameScreen = ({ navigation }) => {
       sum += card.num > 3 ? card.selected * 1 : card.selected * 2;
       num += card.veg != "empty";
     });
-
+    
     return sum == 2 || num == 1;
   };
 
@@ -240,6 +272,17 @@ const GameScreen = ({ navigation }) => {
         }
 
         setCards(tempCardPile);
+
+        // When there are no more cards, show the modal indicating that game is over
+        let numCards = 0;
+        cards.forEach((card) => {
+          numCards += card.veg != "empty";
+        });
+        if (numCards == 0 && gameCardPile.length == 0) {
+          setModalVisibility();
+          updateHighestScore();
+        }
+
       } else if (card.num <= 3 && card.selected) {
         // Take a point card => fetching a new point card
         let tempCard = gameCardPile.shift();
@@ -305,8 +348,56 @@ const GameScreen = ({ navigation }) => {
     calculateScore();
   }, [myCards, myVeggies]);
 
+  // Update highest score in the user's profile
+  const updateHighestScore = () => {
+    if (currentScore > userData.highestScore) {
+      const userRef = doc(fs, "userData", user.uid);
+
+      updateDoc(userRef, "highestScore", currentScore);
+    }
+  };
+
+  // Close the modal and init a new game
+  const closeModal = () => {
+    setModalVisibility(false);
+    initGame();
+  };
+
   return (
     <View style={styles.container}>
+      {/* The modal that shows up when a game is finished. */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisibility}
+      >
+        <ImageBackground
+          source={require("../assets/homebg.png")}
+          resizeMode="cover"
+          style={styles.modal}
+        >
+          <Text style={[styles.textModal, { fontSize: 32 }]}>
+            Game is Over!
+          </Text>
+          <Text style={[styles.textModal, { fontSize: 24, color: "#5c5c5c" }]}>
+            Woo-hoo! You got {currentScore} points!
+          </Text>
+
+          <TouchableOpacity
+            style={styles.iconModal}
+            onPress={() => {
+              closeModal();
+            }}
+          >
+            <Image
+              source={require("../assets/replay.png")}
+              style={styles.image}
+              resizeMode="cover"
+            ></Image>
+          </TouchableOpacity>
+        </ImageBackground>
+      </Modal>
+
       {/* The profile icon (with an absolute position to overlay two containers). */}
       <TouchableOpacity
         style={styles.profileImage}
@@ -475,6 +566,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  modal: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  textModal: {
+    fontFamily: "Baloo2_500Medium",
+    marginBottom: 15,
+    color: "#1c1c1c",
+  },
+
+  iconModal: {
+    width: windowWidth / 5,
+    height: windowWidth / 5,
+    overflow: "hidden",
   },
 
   text: {
