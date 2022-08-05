@@ -191,7 +191,7 @@ const GameScreen = ({ navigation }) => {
   }, [gameCardPile]);
 
   const [images, setImages] = useState({});
-  const listRef = ref(st, "/");
+  const listRef = ref(st, "/gameImageAssets/");
 
   // Load all images from Firebase Storage
   const fetchFromStorage = async () => {
@@ -202,7 +202,7 @@ const GameScreen = ({ navigation }) => {
       await getDownloadURL(ref(st, reference.items[i])).then((url) => {
         let name = url
           .substring(0, url.indexOf("?"))
-          .substring(url.substring(0, url.indexOf("?")).lastIndexOf("/") + 1);
+          .substring(url.substring(0, url.indexOf("?")).lastIndexOf("%") + 3);
         imageHolder[name] = url;
       });
     }
