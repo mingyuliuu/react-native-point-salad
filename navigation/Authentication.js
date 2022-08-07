@@ -12,7 +12,7 @@ import {
 } from "firebase/auth";
 
 import { getDatabase, ref, set } from "firebase/database";
-import { getFirestore, doc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -62,15 +62,16 @@ export const Authentication = ({ children }) => {
                 email: email,
                 password: password,
                 highestScore: 0,
-                profileImage: "../assets/anoyAvatar.png",
+                profileImage: "https://firebasestorage.googleapis.com/v0/b/point-salad-35352.appspot.com/o/profileImages%2FanoyAvatar.png?alt=media&token=741ac2cd-1d52-4824-b174-d1c633a8413f",
               });
 
-              addDoc(doc(fs, "userData", newUser.user.uid), {
+              const userRef = doc(fs, "userData", newUser.user.uid);
+              setDoc(userRef, {
                 name: name,
                 email: email,
                 password: password,
                 highestScore: 0,
-                profileImage: "../assets/anoyAvatar.png",
+                profileImage: "https://firebasestorage.googleapis.com/v0/b/point-salad-35352.appspot.com/o/profileImages%2FanoyAvatar.png?alt=media&token=741ac2cd-1d52-4824-b174-d1c633a8413f",
               });
             })
             .catch((e) => {

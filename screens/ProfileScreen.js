@@ -10,14 +10,18 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { windowWidth } from "../utils/Dimensions";
 
-import { fs } from "../navigation/Authentication";
+import { fs, st } from "../navigation/Authentication";
 import { AuthContext } from "../navigation/Authentication";
 
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+
+import * as ImagePicker from 'expo-image-picker';
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 const ProfileScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
+  const [image, setImage] = useState(null);
 
   const getUser = async () => {
     const userRef = doc(fs, "userData", user.uid);
@@ -35,6 +39,57 @@ const ProfileScreen = ({ navigation }) => {
     getUser().then((user) => setUserData(user));
   }, [userData]);
 
+  // Update the user's profile in Firebase when his/her profile image changes
+  const updateProfileImg = async () => {
+    if (image == null) return;
+
+    const userRef = doc(fs, "userData", user.uid);
+
+    const currentUser = await updateDoc(userRef, "profileImage", image).then(() => {
+      console.log("Updated image for user " + userData.name + " succeeded!");
+    });
+
+    return currentUser;
+  };
+
+  useEffect(() => {
+    updateProfileImg().then((user) => setUserData(user));
+  }, [image]);
+
+  // Allow the player to change his/her profile picture
+  const changeProfileImg = async() => {
+    let chosenImage = await ImagePicker.launchImageLibraryAsync();
+
+    if (!chosenImage.cancelled) {
+      const uploadUrl = await uploadProfileImg(chosenImage.uri);
+      setImage(uploadUrl);
+    }
+  };
+
+  // Upload the player's new profile pic to Firebase Storage
+  const uploadProfileImg = async(uri) => {
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+      xhr.onerror = function (e) {
+        console.log(e);
+        reject(new TypeError("Network request failed"));
+      };
+      xhr.responseType = "blob";
+      xhr.open("GET", uri, true);
+      xhr.send(null);
+    });
+
+    const stRef = ref(st, "/profileImages/" + userData.name + ".png");
+    const result = await uploadBytes(stRef, blob);
+
+    blob.close();
+
+    return await getDownloadURL(stRef);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.titleBar}>
@@ -46,12 +101,21 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.profileImage}>
-        <Image
-          source={require("../assets/anoyAvatar.png")}
-          style={styles.image}
-          resizeMode="cover"
-        ></Image>
+      <View style={{ alignSelf: "center" }}>
+        <View style={styles.profileImage}>
+          <Image
+            source={{ uri: userData ? userData.profileImage : "https://firebasestorage.googleapis.com/v0/b/point-salad-35352.appspot.com/o/profileImages%2FanoyAvatar.png?alt=media&token=741ac2cd-1d52-4824-b174-d1c633a8413f"}}
+            style={styles.image}
+            resizeMode="cover"
+          ></Image>
+        </View>
+
+        <TouchableOpacity
+          style={styles.cameraIcon}
+          onPress={() => changeProfileImg()}
+        >
+          <Ionicons name="camera" size={28} color="#DFD8C8"></Ionicons>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.infoContainer}>
@@ -113,6 +177,18 @@ const styles = StyleSheet.create({
     flex: 1,
     height: windowWidth / 3,
     width: windowWidth / 3,
+  },
+
+  cameraIcon: {
+    backgroundColor: "#969696",
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   titleBar: {

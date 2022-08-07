@@ -223,7 +223,7 @@ const GameScreen = ({ navigation }) => {
       sum += card.num > 3 ? card.selected * 1 : card.selected * 2;
       num += card.veg != "empty";
     });
-    
+
     return sum == 2 || num == 1;
   };
 
@@ -282,7 +282,6 @@ const GameScreen = ({ navigation }) => {
           setModalVisibility();
           updateHighestScore();
         }
-
       } else if (card.num <= 3 && card.selected) {
         // Take a point card => fetching a new point card
         let tempCard = gameCardPile.shift();
@@ -404,7 +403,11 @@ const GameScreen = ({ navigation }) => {
         onPress={() => navigation.navigate("Profile")}
       >
         <Image
-          source={require("../assets/anoyAvatar.png")}
+          source={{
+            uri: userData
+              ? userData.profileImage
+              : "https://firebasestorage.googleapis.com/v0/b/point-salad-35352.appspot.com/o/profileImages%2FanoyAvatar.png?alt=media&token=741ac2cd-1d52-4824-b174-d1c633a8413f",
+          }}
           style={styles.image}
           resizeMode="cover"
         ></Image>
