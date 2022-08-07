@@ -10,7 +10,7 @@ const InstructionScreen = ({ navigation }) => {
       onDone={() => navigation.navigate("Game")}
       pages={[
         {
-          backgroundColor: "#85cbcc",
+          backgroundColor: "#A0CDF9",
           image: (
             <Image
               style={styles.images}
@@ -23,7 +23,7 @@ const InstructionScreen = ({ navigation }) => {
           subTitleStyles: { paddingHorizontal: 12 },
         },
         {
-          backgroundColor: "#a8dee0",
+          backgroundColor: "#97D9E1",
           image: (
             <Image
               style={styles.images}
@@ -36,7 +36,7 @@ const InstructionScreen = ({ navigation }) => {
           subTitleStyles: { paddingHorizontal: 12 },
         },
         {
-          backgroundColor: "#f9e2ae",
+          backgroundColor: "#E2BFE2",
           image: (
             <Image
               style={styles.images}
