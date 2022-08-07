@@ -40,7 +40,7 @@ const InstructionScreen = ({ navigation }) => {
           image: (
             <Image
               style={styles.images}
-              source={require("../assets/onboarding2.png")}
+              source={require("../assets/onboarding3.png")}
             />
           ),
           title: "Then the game is over!,",
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
 
   images: {
-    width: 175,
-    height: 175,
+    width: 250,
+    height: 250,
   },
 });
